@@ -1,5 +1,6 @@
 package telegrambot;
 
+import org.springframework.boot.SpringApplication;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -19,5 +20,7 @@ public class App
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
+
+        SpringApplication.run(ScheduledTasks.class, args);
     }
 }
