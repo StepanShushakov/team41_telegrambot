@@ -1,6 +1,7 @@
 package telegrambot;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -35,23 +36,28 @@ public class Bot extends TelegramLongPollingBot {
         if (message.getText().equalsIgnoreCase("/order")) {
             String outgoingText = receiveOrder();
             sendText(message.getFrom().getId(), outgoingText);
-            saveMessage("OUTGOING", outgoingText);
         }
 
     }
 
-    private String receiveOrder() {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public String receiveOrder() {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd MMMM yyyy г.");
         Calendar calendar = new GregorianCalendar();
-        return formatter.format(calendar.getTime()) + "   " + ((calendar.WEEK_OF_YEAR) % 2 == 0 ? "reverse" : "forward");
+        return "Сегодня, "
+                + formatter.format(calendar.getTime())
+                + ", порядок выступления: <b><u>"
+                + ((calendar.WEEK_OF_YEAR) % 2 == 0 ? "с конца" : "с начала")
+                + "</u></b>";
     }
 
     public void sendText(Long who, String what){
         SendMessage sm = SendMessage.builder()
                 .chatId(who.toString()) //Who are we sending a message to
                 .text(what).build();    //Message content
+        sm.setParseMode(ParseMode.HTML);
         try {
             execute(sm);                        //Actually sending the message
+            saveMessage("OUTGOING", what);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);      //Any error will be printed here
         }
@@ -69,9 +75,8 @@ public class Bot extends TelegramLongPollingBot {
                     + direction +"' , '"
                     + body + "', '"
                     + formatter.format(new GregorianCalendar().getTime()) + "');");
-            connection.commit();;
+            connection.commit();
         } catch (SQLException e) {
-//            throw new RuntimeException(e);
             System.out.println(e);
         }
     }
