@@ -33,17 +33,18 @@ public class Bot extends TelegramLongPollingBot {
 
         saveMessage("INCOMING", message.toString());
         if (message.getText().equalsIgnoreCase("/order")) {
-            String outgoingText = receiveOrder();
-            sendText(message.getFrom().getId(), outgoingText);
-            saveMessage("OUTGOING", outgoingText);
+            sendText(message.getFrom().getId(), receiveOrder());
         }
 
     }
 
-    private String receiveOrder() {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public String receiveOrder() {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd MMMM yyyy г.");
         Calendar calendar = new GregorianCalendar();
-        return formatter.format(calendar.getTime()) + "   " + ((calendar.WEEK_OF_YEAR) % 2 == 0 ? "reverse" : "forward");
+        return "Сегодня, "
+                + formatter.format(calendar.getTime())
+                + ", порядок выступления: "
+                + ((calendar.WEEK_OF_YEAR) % 2 == 0 ? "с конца" : "с начала");
     }
 
     public void sendText(Long who, String what){
@@ -52,6 +53,7 @@ public class Bot extends TelegramLongPollingBot {
                 .text(what).build();    //Message content
         try {
             execute(sm);                        //Actually sending the message
+            saveMessage("OUTGOING", what);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);      //Any error will be printed here
         }
@@ -69,9 +71,8 @@ public class Bot extends TelegramLongPollingBot {
                     + direction +"' , '"
                     + body + "', '"
                     + formatter.format(new GregorianCalendar().getTime()) + "');");
-            connection.commit();;
+            connection.commit();
         } catch (SQLException e) {
-//            throw new RuntimeException(e);
             System.out.println(e);
         }
     }
