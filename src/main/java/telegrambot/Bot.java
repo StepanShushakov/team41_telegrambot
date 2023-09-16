@@ -46,7 +46,7 @@ public class Bot extends TelegramLongPollingBot {
         return "Сегодня, "
                 + formatter.format(calendar.getTime())
                 + ", порядок выступления: <b><u>"
-                + ((calendar.WEEK_OF_YEAR) % 2 == 0 ? "с конца" : "с начала")
+                + (calendar.get(Calendar.WEEK_OF_YEAR) % 2 == 0 ? "с конца" : "с начала")
                 + "</u></b>";
     }
 
