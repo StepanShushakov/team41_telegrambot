@@ -14,6 +14,7 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.logging.Logger;
 
 public class Bot extends TelegramLongPollingBot {
 
@@ -32,7 +33,11 @@ public class Bot extends TelegramLongPollingBot {
 
         Message message = update.getMessage();
 
-        saveMessage("INCOMING", message.toString());
+        try {
+            saveMessage("INCOMING", message.toString());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         if (message.getText().equalsIgnoreCase("/order")) {
             String outgoingText = receiveOrder();
             sendText(message.getFrom().getId(), outgoingText);
@@ -46,7 +51,7 @@ public class Bot extends TelegramLongPollingBot {
         return "Сегодня, "
                 + formatter.format(calendar.getTime())
                 + ", порядок выступления: <b><u>"
-                + (calendar.get(Calendar.WEEK_OF_YEAR) % 2 == 0 ? "с конца" : "с начала")
+                + (calendar.get(Calendar.DAY_OF_MONTH) % 2 == 0 ? "с конца" : "с начала")
                 + "</u></b>";
     }
 
@@ -58,26 +63,31 @@ public class Bot extends TelegramLongPollingBot {
         try {
             execute(sm);                        //Actually sending the message
             saveMessage("OUTGOING", what);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);      //Any error will be printed here
+        } catch (TelegramApiException|SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private void saveMessage(String direction, String body) {
+    private void saveMessage(String direction, String body) throws SQLException, NullPointerException {
+        Connection connection = null;
+        Statement statement = null;
         try {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:54321/telegrambot",
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:54321/telegrambot",
                     "root",
                     "root");
             connection.setAutoCommit(false);
-            Statement statement = connection.createStatement();
+            statement = connection.createStatement();
             statement.execute("insert into messages (direction, body, time) values ('"
                     + direction +"' , '"
                     + body + "', '"
                     + formatter.format(new GregorianCalendar().getTime()) + "');");
             connection.commit();
         } catch (SQLException e) {
-            System.out.println(e);
+            Logger.getLogger(this.getClass().getSimpleName()).info(e.toString());
+        } finally {
+            statement.close();
+            connection.close();
         }
     }
 }
