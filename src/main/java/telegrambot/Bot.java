@@ -18,6 +18,8 @@ import java.util.logging.Logger;
 
 public class Bot extends TelegramLongPollingBot {
 
+    private final Logger logger = Logger.getLogger(getClass().getName());
+
     @Override
     public String getBotUsername() {
         return "team41info_bot";
@@ -32,13 +34,21 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
 
         Message message = update.getMessage();
+        if (message == null) {
+            return;
+        }
 
-        try {
+        /*try {
             saveMessage("INCOMING", message.toString());
         } catch (SQLException e) {
             throw new RuntimeException(e);
-        }
-        if (message.getText().equalsIgnoreCase("/order")) {
+        }*/
+        logger.info("user: " + message.getFrom().getUserName()
+                + " (" + message.getFrom().getId() + "); "
+                + ( message.getChat().getTitle() == null ? "text: " + message.getText() : "chat: " + message.getChat().getTitle()
+                + " (" + message.getChat().getId() + ")"));
+        if (message.getText() != null
+                && message.getText().equalsIgnoreCase("/order")) {
             String outgoingText = receiveOrder();
             sendText(message.getFrom().getId(), outgoingText);
         }
@@ -62,8 +72,9 @@ public class Bot extends TelegramLongPollingBot {
         sm.setParseMode(ParseMode.HTML);
         try {
             execute(sm);                        //Actually sending the message
-            saveMessage("OUTGOING", what);
-        } catch (TelegramApiException|SQLException e) {
+            /*saveMessage("OUTGOING", what);*/
+            logger.info("Bot: " + what);
+        } catch (TelegramApiException/*|SQLException*/ e) {
             throw new RuntimeException(e);
         }
     }
